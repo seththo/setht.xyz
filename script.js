@@ -105,67 +105,27 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-// Notification system
+// Show notification
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
-    const existingNotification = document.querySelector('.notification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-    
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
-        <div class="notification-content">
-            <span class="notification-message">${message}</span>
-            <button class="notification-close">&times;</button>
-        </div>
+        <i class="fas fa-info-circle"></i>
+        <span>${message}</span>
     `;
     
-    // Add styles
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#27ca3f' : type === 'error' ? '#ef4444' : '#3b82f6'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        z-index: 10000;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-        max-width: 400px;
-        font-family: 'Inter', sans-serif;
-    `;
-    
-    // Add to page
     document.body.appendChild(notification);
     
-    // Animate in
     setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
+        notification.classList.add('show');
     }, 100);
     
-    // Close button functionality
-    const closeBtn = notification.querySelector('.notification-close');
-    closeBtn.addEventListener('click', () => {
-        notification.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+        notification.classList.remove('show');
         setTimeout(() => {
             notification.remove();
         }, 300);
-    });
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }
-    }, 5000);
+    }, 2000);
 }
 
 // Typing animation for hero title
@@ -321,7 +281,209 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize 3D card effects
     initialize3DCards();
+    
+    // Initialize mobile-specific features
+    initializeMobileFeatures();
 });
+
+// Initialize mobile-specific features
+function initializeMobileFeatures() {
+    // Mobile Floating Action Button
+    const mobileFab = document.getElementById('mobileFab');
+    if (mobileFab) {
+        mobileFab.addEventListener('click', function() {
+            // Add haptic feedback simulation
+            this.classList.add('haptic-feedback');
+            setTimeout(() => {
+                this.classList.remove('haptic-feedback');
+            }, 100);
+            
+            // Scroll to top with smooth animation
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            
+            // Create particle burst
+            createMobileParticleBurst(this);
+        });
+    }
+    
+    // Mobile pull-to-refresh
+    initializePullToRefresh();
+    
+    // Mobile shake detection
+    initializeShakeDetection();
+    
+    // Mobile tilt effects
+    initializeMobileTiltEffects();
+    
+    // Mobile card stack effects
+    initializeCardStackEffects();
+}
+
+// Mobile pull-to-refresh
+function initializePullToRefresh() {
+    let startY = 0;
+    let currentY = 0;
+    let pullDistance = 0;
+    const threshold = 100;
+    
+    document.addEventListener('touchstart', function(e) {
+        if (window.scrollY === 0) {
+            startY = e.touches[0].clientY;
+        }
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (window.scrollY === 0 && startY > 0) {
+            currentY = e.touches[0].clientY;
+            pullDistance = currentY - startY;
+            
+            if (pullDistance > 0) {
+                const indicator = document.getElementById('pullRefreshIndicator');
+                if (indicator) {
+                    indicator.style.opacity = Math.min(pullDistance / threshold, 1);
+                }
+            }
+        }
+    });
+    
+    document.addEventListener('touchend', function() {
+        if (pullDistance > threshold) {
+            // Trigger refresh
+            const indicator = document.getElementById('pullRefreshIndicator');
+            if (indicator) {
+                indicator.classList.add('active');
+                setTimeout(() => {
+                    indicator.classList.remove('active');
+                    location.reload();
+                }, 1000);
+            }
+        }
+        
+        startY = 0;
+        pullDistance = 0;
+    });
+}
+
+// Mobile shake detection
+function initializeShakeDetection() {
+    let lastUpdate = 0;
+    let lastX, lastY, lastZ;
+    const threshold = 15;
+    
+    if (window.DeviceMotionEvent) {
+        window.addEventListener('devicemotion', function(event) {
+            const current = event.accelerationIncludingGravity;
+            const currentTime = new Date().getTime();
+            
+            if ((currentTime - lastUpdate) > 100) {
+                const diffTime = currentTime - lastUpdate;
+                lastUpdate = currentTime;
+                
+                const speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
+                
+                if (speed > threshold) {
+                    // Shake detected
+                    showNotification('Shake Detected!', 'info');
+                    document.body.classList.add('shake-to-refresh');
+                    setTimeout(() => {
+                        document.body.classList.remove('shake-to-refresh');
+                    }, 500);
+                }
+                
+                lastX = current.x;
+                lastY = current.y;
+                lastZ = current.z;
+            }
+        });
+    }
+}
+
+// Mobile tilt effects
+function initializeMobileTiltEffects() {
+    const cards = document.querySelectorAll('.card-3d, .service-card, .portfolio-item');
+    
+    cards.forEach(card => {
+        card.addEventListener('touchmove', function(e) {
+            const touch = e.touches[0];
+            const rect = this.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+            
+            const rotateX = (touchY - centerY) / 20;
+            const rotateY = (centerX - touchX) / 20;
+            
+            this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+        });
+        
+        card.addEventListener('touchend', function() {
+            this.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+        });
+    });
+}
+
+// Mobile card stack effects
+function initializeCardStackEffects() {
+    const cardStacks = document.querySelectorAll('.card-stack');
+    
+    cardStacks.forEach(stack => {
+        const items = stack.querySelectorAll('.card-stack-item');
+        
+        items.forEach((item, index) => {
+            item.addEventListener('touchstart', function() {
+                // Bring clicked card to front
+                items.forEach((otherItem, otherIndex) => {
+                    if (otherIndex <= index) {
+                        otherItem.style.zIndex = items.length - index + otherIndex;
+                    }
+                });
+            });
+        });
+    });
+}
+
+// Create mobile particle burst
+function createMobileParticleBurst(element) {
+    const rect = element.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    for (let i = 0; i < 12; i++) {
+        const particle = document.createElement('div');
+        const angle = (i / 12) * Math.PI * 2;
+        const velocity = 100 + Math.random() * 50;
+        
+        particle.style.cssText = `
+            position: fixed;
+            left: ${centerX}px;
+            top: ${centerY}px;
+            width: 6px;
+            height: 6px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            animation: mobileParticleBurst 1s ease-out forwards;
+        `;
+        
+        document.body.appendChild(particle);
+        
+        // Set particle trajectory
+        const endX = centerX + Math.cos(angle) * velocity;
+        const endY = centerY + Math.sin(angle) * velocity;
+        
+        particle.style.setProperty('--end-x', endX + 'px');
+        particle.style.setProperty('--end-y', endY + 'px');
+        
+        setTimeout(() => {
+            particle.remove();
+        }, 1000);
+    }
+}
 
 // Initialize progress bars with animation
 function initializeProgressBars() {
@@ -478,6 +640,17 @@ style.textContent = `
         }
     }
     
+    @keyframes mobileParticleBurst {
+        0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(calc(var(--end-x) - 50%), calc(var(--end-y) - 50%)) scale(0);
+            opacity: 0;
+        }
+    }
+    
     .btn {
         position: relative;
         overflow: hidden;
@@ -534,6 +707,25 @@ style.textContent = `
         to {
             opacity: 1;
             transform: translateY(0);
+        }
+    }
+    
+    /* Mobile-specific animations */
+    .mobile-floating-elements {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .mobile-floating-elements {
+            display: block;
+        }
+        
+        .mobile-swipe-hint {
+            display: block;
+        }
+        
+        .mobile-fab {
+            display: flex;
         }
     }
 `;
