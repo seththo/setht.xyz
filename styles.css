@@ -2756,6 +2756,31 @@ html {
     border-radius: 1px;
 }
 
+/* Logo styling - ensure it doesn't get affected by active states */
+.logo-text {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    animation: logoGlow 2s ease-in-out infinite;
+}
+
+.logo-text:hover {
+    color: var(--accent-color);
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Ensure logo doesn't inherit active link styles */
+.nav-brand .logo-text.active {
+    color: var(--text-primary);
+}
+
+.nav-brand .logo-text.active::after {
+    display: none;
+}
+
 /* Mobile Responsive Updates */
 @media (max-width: 768px) {
     .about-content {
